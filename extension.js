@@ -547,13 +547,21 @@ const BatteryIndicator = GObject.registerClass(
             // metadata property set by QuickSettingsLayout.  colSpan = 2 makes
             // the row span the full width of the two-column grid.
             //
-            // We use the same sibling anchor that addExternalIndicator() uses:
-            // the last item of the Background Apps indicator's quickSettingsItems.
-            // Inserting *before* that anchor places our rows just above Background
-            // Apps, which is exactly the position the user requested.
+            // Anchor strategy: on the very first insertion we use Background Apps
+            // as the sibling (same as addExternalIndicator() does), then we
+            // remember that first row as "_anchorRow".  Every subsequent row is
+            // inserted before _anchorRow rather than before Background Apps.
+            //
+            // This guarantees our group stays contiguous even when another
+            // extension also calls addExternalIndicator() and its items end up
+            // between our anchor and Background Apps.
             const qs = Main.panel.statusArea.quickSettings;
-            const sibling = qs._backgroundApps?.quickSettingsItems?.at(-1) ?? null;
+            const sibling = this._anchorRow ?? qs._backgroundApps?.quickSettingsItems?.at(-1) ?? null;
             qs.menu.insertItemBefore(row, sibling, 2);
+
+            // The bottom-most row of our group (i.e. the first one we ever
+            // inserted) never changes; all new rows pile up above it.
+            if (!this._anchorRow) this._anchorRow = row;
 
             // Also track property changes here in BatteryIndicator so that the
             // panel-bar warning icon can be updated whenever any device's charge
@@ -583,6 +591,33 @@ const BatteryIndicator = GObject.registerClass(
             // inside DeviceBatteryRow._init).
             row.destroy();
             this._rows.delete(objectPath);
+
+            // If the anchor row was just removed we need a new one.  The new
+            // anchor is the row that is now visually lowest in our group, i.e.
+            // the one whose actor has no remaining sibling that also belongs to
+            // our set.  The simplest stable choice: iterate the remaining rows
+            // and pick whichever one has no other row-from-our-set as its next
+            // Clutter sibling (i.e. it sits at the bottom of the group).
+            if (this._anchorRow === row) {
+                this._anchorRow = null;
+                for (const candidate of this._rows.values()) {
+                    if (!this._anchorRow) {
+                        this._anchorRow = candidate;
+                        continue;
+                    }
+                    // Prefer whichever actor comes later in the grid's child
+                    // list — that is the one closest to Background Apps.
+                    const grid = Main.panel.statusArea.quickSettings.menu._grid;
+                    let anchorIdx = -1,
+                        candidateIdx = -1;
+                    let i = 0;
+                    for (let child = grid.get_first_child(); child; child = child.get_next_sibling(), i++) {
+                        if (child === this._anchorRow) anchorIdx = i;
+                        if (child === candidate) candidateIdx = i;
+                    }
+                    if (candidateIdx > anchorIdx) this._anchorRow = candidate;
+                }
+            }
 
             this._syncWarningIcon();
         }
