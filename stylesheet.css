@@ -1,0 +1,97 @@
+/* ============================================================================
+ * Fluent Battery Indicators — stylesheet.css
+ *
+ * Styles for the flat, full-width device battery rows that appear directly in
+ * the Quick Settings panel grid, one row per connected peripheral device.
+ *
+ * Row anatomy (left → right, all on one line):
+ *
+ *   .battery-device-row
+ *   ├─ .battery-device-type-icon   ← symbolic device-kind icon (left)
+ *   ├─ .battery-device-name        ← device name, expands to fill space (left)
+ *   ├─ .battery-device-percentage  ← "85 %" label (right)
+ *   └─ .battery-device-battery-icon← battery-level icon (right, last)
+ *
+ * We lean on the shell's existing colour variables and sizing conventions so
+ * the extension looks at home inside any GNOME 49 theme.
+ * ============================================================================ */
+
+/* ── Row container ─────────────────────────────────────────────────────────── */
+
+.battery-device-row {
+    /* Horizontal spacing between the four child elements */
+    spacing: 10px;
+
+    /* Vertical padding keeps the row the same comfortable height as a standard
+       quick-toggle button (~48 px natural height). */
+    padding-top: 11px;
+    padding-bottom: 11px;
+
+    /* Side padding aligns content with the text of neighbouring toggle labels */
+    padding-left: 16px;
+    padding-right: 16px;
+
+    /* Pill-shaped background: matches the quick-settings grid item aesthetic.
+       Uses a neutral semi-transparent overlay that works on both light and
+       dark panel backgrounds. */
+    border-radius: 14px;
+    background-color: rgba(127, 127, 127, 0.15);
+}
+
+/* ── 1. Device-type icon (left) ────────────────────────────────────────────── */
+
+.battery-device-type-icon {
+    icon-size: 20px;
+    /* No x_expand — fixed width, hugs the left edge */
+}
+
+/* ── 2. Device name (left, expands) ────────────────────────────────────────── */
+
+.battery-device-name {
+    /* Slightly smaller than the shell's panel font so two rows of info don't
+       crowd each other when many devices are present */
+    font-size: 0.97em;
+
+    /* No explicit font-weight: inherit the panel's default weight so the name
+       does not look heavier than neighbouring quick-toggle labels */
+}
+
+/* ── 3. Battery percentage label (right) ────────────────────────────────────── */
+
+.battery-device-percentage {
+    /* Tabular figures stop the number from visually "jumping" as it changes
+       between e.g. "9 %" and "10 %" */
+    font-feature-settings: "tnum";
+
+    /* Slightly smaller than the name so it reads as secondary information */
+    font-size: 0.9em;
+    font-weight: bold;
+
+    /* Reserve enough horizontal space for "100 %" without reflowing siblings */
+    min-width: 3.4em;
+    text-align: right;
+}
+
+/* Warning state: applied when the device is discharging below
+   LOW_BATTERY_THRESHOLD (20 % by default).
+   Uses the CSS custom property exposed by most GNOME Shell themes, with a
+   sensible fallback that matches GNOME's own low-battery notification colour. */
+.battery-device-percentage-low {
+    color: var(--warning-color, #f28b82);
+}
+
+/* ── 4. Battery-level icon (right, last) ─────────────────────────────────────── */
+
+.battery-device-battery-icon {
+    /* Match the device-type icon size for visual balance */
+    icon-size: 20px;
+}
+
+/* ── Panel-bar caution icon ──────────────────────────────────────────────────── */
+
+/* When _warningIcon is shown in the top panel status bar, tint it with the
+   same warning colour used for the percentage label so the two are visually
+   consistent. */
+.panel-status-indicators-box StIcon.battery-caution-symbolic {
+    color: var(--warning-color, #f28b82);
+}

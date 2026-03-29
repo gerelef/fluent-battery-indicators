@@ -1,0 +1,8 @@
+{
+    "name": "Fluent Battery Indicators",
+    "description": "Fluent battery information for all connected peripheral devices in the GNOME Shell quick settings panel.",
+    "uuid": "fluent-battery-indicators@gerelef.github.io",
+    "shell-version": ["49"],
+    "version": 1,
+    "url": ""
+}
